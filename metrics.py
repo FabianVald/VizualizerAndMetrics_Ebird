@@ -181,7 +181,7 @@ class EvaluadorDDPM3ColsSingleCombo:
 
     def show_image(self, canvas, path):
         image = Image.open(path)
-        image = image.resize((280, 280), resample=Image.LANCZOS)
+        image = image.resize((280, 280), resample=0)
         photo = ImageTk.PhotoImage(image)
         canvas.image = photo
         canvas.delete("all")
