@@ -34,10 +34,10 @@ primer_nombre = list(dataframes.keys())[0]
 clases = sorted(dataframes[primer_nombre]['Clase'].unique())
 
 # Estilos de marcadores por modelo
-marcadores = ['o', 's', '^', 'D', '*', 'x', 'P', 'v']  # Se repiten si hay más modelos
-colores = plt.cm.tab10.colors  # Paleta por defecto
+marcadores = ['o', 's', '^', 'D', '*', 'x', 'P', 'v']
+colores = plt.cm.tab10.colors
 
-# Generar gráfico de líneas con marcadores para cada métrica
+# === 1. Gráficos de líneas por clase ===
 for metrica in metricas:
     plt.figure(figsize=(12, 6))
     valores_maximos = []
@@ -55,7 +55,7 @@ for metrica in metricas:
         valores_maximos.extend(valores)
         valores_minimos.extend(valores)
 
-    # Ajuste eje Y con precisión
+    # Eje Y preciso
     ymin = min(valores_minimos)
     ymax = max(valores_maximos)
     margen = (ymax - ymin) * 0.1 if ymax != ymin else 0.1
@@ -66,10 +66,51 @@ for metrica in metricas:
     plt.ylabel(metrica)
     plt.xticks(clases)
     plt.grid(True, linestyle='--', alpha=0.6)
-
-    # Leyenda fuera del gráfico
     plt.legend(loc='center', bbox_to_anchor=(0.5, 1.12), ncol=len(dataframes))
-
     plt.tight_layout()
     plt.savefig(f'lineas_{metrica}.png')
     plt.show()
+
+# === 2. Calcular promedios por modelo y métrica ===
+promedios = []
+
+for nombre_modelo, df in dataframes.items():
+    fila = {'Modelo': nombre_modelo}
+    for metrica in metricas:
+        fila[metrica] = df[metrica].mean()
+    promedios.append(fila)
+
+df_promedios = pd.DataFrame(promedios)
+df_promedios.to_csv("promedios_metricas.csv", index=False)
+print("\n✅ Tabla de promedios guardada en 'promedios_metricas.csv'")
+print(df_promedios.round(4))
+
+# === 3. Gráficos de barras por métrica con promedios ===
+# === 3. Gráficos de barras por métrica con promedios ===
+for metrica in metricas:
+    plt.figure(figsize=(8, 5))
+    modelos = df_promedios['Modelo']
+    valores = df_promedios[metrica]
+
+    # Calcular rango Y con margen para mejor precisión visual
+    ymin = valores.min()
+    ymax = valores.max()
+    margen = (ymax - ymin) * 0.1 if ymax != ymin else 0.1
+    plt.ylim(ymin - margen, ymax + margen)
+
+    plt.bar(modelos, valores, color=colores[:len(modelos)], edgecolor='black')
+    plt.title(f'Average {metrica} per model')
+    plt.ylabel(f'Average {metrica}')
+    plt.xticks(rotation=45)
+
+    # Mejorar precisión y formato de ticks Y
+    # Ejemplo: generar 6 ticks en el eje Y
+    from matplotlib.ticker import MaxNLocator
+    ax = plt.gca()
+    ax.yaxis.set_major_locator(MaxNLocator(nbins=6, prune='both'))  # 6 ticks máximo, sin extremos sobrantes
+
+    plt.grid(axis='y', linestyle='--', alpha=0.6)
+    plt.tight_layout()
+    plt.savefig(f'promedio_{metrica}.png')
+    plt.show()
+
